@@ -40,13 +40,14 @@ def get_homework_statuses(current_timestamp):
         'Authorization': f'OAuth {PRAKTIKUM_TOKEN}',
     }
     params = {
-        'from_date': current_timestamp,
+        'from_date': current_timestamp or int(time.time()),
     }
     try:
         homework_statuses = requests.get(URL, headers=headers, params=params)
         return homework_statuses.json()
-    except Exception:
-        return []
+    except requests.RequestException as e:
+        logging.error(f'Ошибка запроса: {e}', exc_info=True)
+        return dict()
 
 
 def send_message(message, bot_client):
@@ -59,7 +60,7 @@ def main():
     current_timestamp = int(time.time())
     while True:
         try:
-            new_homework = get_homework_statuses(current_timestamp)
+            new_homework = get_homework_statuses(0)
             if new_homework.get('homeworks'):
                 send_message(
                     parse_homework_status(new_homework.get('homeworks')[0]),
